@@ -17,7 +17,7 @@ Axt is dead-simple and you should build the binary yourself.
 git clone https://github.com/ctholho/axt.git
 cd axt
 go mod tidy
-go build axt.go
+go build -o axt cmd/cli.go
 ```
 
 Use the `axt` binary and pipe the output of your server application into it.
@@ -42,11 +42,6 @@ No, because – come on.
 
 <details>
 <summary>What about version numbers?</summary>
-No, because – come on.
-</details>
-
-<details>
-<summary>I'd like to configure axt!</summary>
 No, because – come on.
 </details>
 
