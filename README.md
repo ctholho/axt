@@ -34,6 +34,19 @@ Or install globally, by adding it to your bin
 sudo mv axt /usr/local/bin
 ```
 
+## Configuration
+
+These flags are available:
+
+```
+  -l, --level string       define name of the level property (default "level")
+  -m, --message string     define name of the message property (default "msg")
+  -t, --time string        define name of the time property (default "time")
+      --time-in string     given time format used by time property. Some values used by go's time module are possible. (default "RFC3339")
+      --emoji              display levels as emoji instead of text
+      --linebreak string   "always" | only after "json" | "never" (default "always")
+```
+
 ## FAQ
 <details>
 <summary>Do you guarantee backwards compatibility?</summary>
