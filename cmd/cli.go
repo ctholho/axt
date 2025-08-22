@@ -13,6 +13,13 @@ import (
 )
 
 var (
+	Version    = "dev"
+	Commit     = "local"
+	CommitDate = "n/a"
+	TreeState  = "dirty"
+)
+
+var (
 	msgKeyDefault            = "msg"
 	timeKeyDefault           = "time"
 	levelKeyDefault          = "level"
@@ -31,7 +38,23 @@ func main() {
 	timeInputFormatFlag := flag.String("time-in", timeInputFormatDefault, "given time format used by time property. Some values used by go's time module are possible.")
 	timeOutputFormatFlag := flag.String("time-out", timeOutputFormatDefault, "print time in this format. (WIP!)")
 
+	var showVersion bool
+	flag.BoolVarP(&showVersion, "version", "v", false, "Show version information")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "axt | structured logs but forcibly gemütlich | %s\n\n", Version)
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "  axt [options]\n\n")
+		fmt.Fprintf(os.Stderr, "Options:\n")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
+
+	if showVersion {
+		printVersion()
+		os.Exit(0)
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -118,4 +141,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error reading input: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func printVersion() {
+	fmt.Printf("axt version: %s\n", Version)
+	fmt.Printf("Commit: %s\n", Commit)
+	fmt.Printf("Built at: %s\n", CommitDate)
+	fmt.Printf("Tree state: %s\n", TreeState)
 }
