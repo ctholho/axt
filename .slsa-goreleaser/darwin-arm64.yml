@@ -20,9 +20,9 @@ goarch: arm64
 binary: axt-{{ .Os }}-{{ .Arch }}
 
 ldflags:
+  - "-s"
   - "-X main.Version={{ .Env.VERSION }}"
   - "-X main.Commit={{ .Env.COMMIT }}"
   - "-X main.CommitDate={{ .Env.COMMIT_DATE }}"
   - "-X main.TreeState={{ .Env.TREE_STATE }}"
-  - "-s"
   - "-w"

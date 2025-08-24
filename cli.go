@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/pterm/pterm"
@@ -143,6 +144,11 @@ func main() {
 }
 
 func printVersion() {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if Version == "dev" && ok {
+		Version = buildInfo.Main.Version
+	}
+
 	fmt.Printf("axt version: %s\n", Version)
 	fmt.Printf("Commit: %s\n", Commit)
 	fmt.Printf("Built at: %s\n", CommitDate)
