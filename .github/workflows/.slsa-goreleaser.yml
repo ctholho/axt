@@ -28,6 +28,7 @@ jobs:
           echo "tree-state=$(if git diff --quiet; then echo "clean"; else echo "dirty"; fi)" >> "$GITHUB_OUTPUT"
 
   build:
+    needs: args
     permissions:
       id-token: write # To sign the provenance.
       contents: write # To upload assets to release.

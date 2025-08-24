@@ -6,7 +6,7 @@
 // # Or read from a log file
 // tail -f /path/to/logfile | ./axt
 
-package axt
+package main
 
 import (
 	"encoding/json"
@@ -23,7 +23,7 @@ import (
 // Returns:
 // - uppercased and colorized string
 // - pterm color for further use
-func FormatLevel(level string, emoji bool) (string, pterm.Color) {
+func formatLevel(level string, emoji bool) (string, pterm.Color) {
 	upperLevel := strings.ToUpper(level)
 	color := pterm.FgWhite
 
@@ -78,8 +78,8 @@ func FormatLevel(level string, emoji bool) (string, pterm.Color) {
 	return formattedLevel, color
 }
 
-// FormatTime reformats time according to incoming `format` and output
-func FormatTime(timeStr string, format string, output string) string {
+// formatTime reformats time according to incoming `format` and output
+func formatTime(timeStr string, format string, output string) string {
 	formats := map[string]string{
 		"RFC3339":     time.RFC3339,
 		"RFC3339Nano": time.RFC3339Nano,
@@ -114,7 +114,7 @@ func FormatTime(timeStr string, format string, output string) string {
 }
 
 // formatValue formats the value based on its type
-func FormatValue(value any) string {
+func formatValue(value any) string {
 	jsonBytes, err := json.Marshal(value)
 	if err != nil {
 		return pterm.FgRed.Sprint(fmt.Sprintf("%v", value))
@@ -155,8 +155,8 @@ func hexp(p byte) byte {
 	}
 }
 
-// FormatNewLine returns a string that is contains either a new line or is empty.
-func FormatNewLine(strategy string, structured bool) string {
+// formatNewLine returns a string that is contains either a new line or is empty.
+func formatNewLine(strategy string, structured bool) string {
 	switch strategy {
 	case "always":
 		return "\n"

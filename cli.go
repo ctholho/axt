@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ctholho/axt"
 	"github.com/pterm/pterm"
 	flag "github.com/spf13/pflag"
 )
@@ -62,14 +61,14 @@ func main() {
 		line := scanner.Text()
 		var entry map[string]any
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
-			fmt.Printf("🪵  %s\n%s", line, axt.FormatNewLine(*emptyLineStrategyFlag, false))
+			fmt.Printf("🪵  %s\n%s", line, formatNewLine(*emptyLineStrategyFlag, false))
 			continue
 		}
 
 		// TIME
 		timeValue, _ := entry[*timeKeyFlag].(string)
 		timeColor := pterm.FgDarkGray
-		t := axt.FormatTime(timeValue, *timeInputFormatFlag, *timeOutputFormatFlag)
+		t := formatTime(timeValue, *timeInputFormatFlag, *timeOutputFormatFlag)
 		formattedTime := pterm.Color(timeColor).Sprint(t)
 
 		// LEVEL
@@ -78,7 +77,7 @@ func main() {
 			// Should never happen, but who knows how people configure their logger
 			levelValue = "NO LEVEL"
 		}
-		formattedLevel, levelColor := axt.FormatLevel(levelValue, *emojiLevel)
+		formattedLevel, levelColor := formatLevel(levelValue, *emojiLevel)
 
 		// MESSAGE
 		messageValue, _ := entry[*messageKeyFlag].(string)
@@ -101,7 +100,7 @@ func main() {
 		if len(entry) > 0 {
 			for key, value := range entry {
 				formattedKey := pterm.NewStyle(pterm.FgWhite, pterm.Bold).Sprint(key)
-				formattedValue := axt.FormatValue(value)
+				formattedValue := formatValue(value)
 				formattedValueLines := strings.Split(formattedValue, "\n")
 				logLines = append(logLines, fmt.Sprintf("%s   %s: %s", verticalLine, formattedKey, formattedValueLines[0]))
 				for _, line := range formattedValueLines[1:] {
@@ -134,7 +133,7 @@ func main() {
 		}
 
 		// Maybe an empty line after each event
-		fmt.Printf("%s", axt.FormatNewLine(*emptyLineStrategyFlag, true))
+		fmt.Printf("%s", formatNewLine(*emptyLineStrategyFlag, true))
 
 	}
 	if err := scanner.Err(); err != nil {
