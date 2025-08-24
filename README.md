@@ -9,7 +9,7 @@ Some unreadable mess
 
 ```
 {"time":"2025-08-24T21:51:45.549605+02:00","level":"INFO","msg":"API request completed","status_code":200,"response_time_ms":127,"response_size_kb":24.7}
-{"time":"2025-08-24T21:51:45.549671+02:00","level":"INFO","msg":"Feature flags status","dark_mode":true,"beta_features":false,"thingy":null}
+{"time":"2025-08-24T21:51:45.549671+02:00","level":"INFO","msg":"feature-flag:set","dark_mode":true,"beta_features":false,"thingy":null}
 ```
 
 becomes:
@@ -36,14 +36,14 @@ Unstructured logs get the attention they deserve:
 
 ## How to use
 
-Start your application and pipe it's output through axt. E.g.:
+Start your application and pipe its output through axt. E.g.:
 
 ```bash
 ./my-application | axt
 ```
 
-Your logging lib might use different property names for the three important
-parts of a log.
+Your logging lib might use a variety of property names for the three important
+parts of a log (as far as axt is concerned)
 
 The defaults (as specified by go's slog lib) are:
 
@@ -73,6 +73,11 @@ Examples:
   ```bash
   ./spring-app | axt -t @timestamp -l log.level
   ```
+
+Protips:
+
+ - Alias axt with your runtime flags to a command that makes it shorter to use
+ - Add the pipe through axt in a Makefile
 
 ## Install
 
