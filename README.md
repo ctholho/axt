@@ -5,7 +5,7 @@
 axt turns structured logs to something readable on your local dev machine.
 It's mostly a wrapper for the awesome project [pterm](github.com/pterm)
 
-Basically, something like this:
+Some unreadable mess
 
 ```
 {"time":"2025-08-24T21:51:45.549605+02:00","level":"INFO","msg":"API request completed","status_code":200,"response_time_ms":127,"response_size_kb":24.7}
@@ -26,31 +26,69 @@ becomes:
                   thingy: null
 ```
 
-(with some colors)
+(with some colors sprinkled in)
 
-Unstructured logs, that found it's way in your logging output (purely by,
-accident of course) will be displayed like
+Unstructured logs get the attention they deserve:
 
 ```
 🪵  something without proper JSON
 ```
 
+## How to use
+
+Start your application and pipe it's output through axt. E.g.:
+
+```bash
+./my-application | axt
+```
+
+Your logging lib might use different property names for the three important
+parts of a log.
+
+The defaults (as specified by go's slog lib) are:
+
+  - level
+  - msg
+  - time
+
+You have these run-time flags at your disposal.
+
+```
+  -l, --level string       define name of the level property (default "level")
+  -m, --message string     define name of the message property (default "msg")
+  -t, --time string        define name of the time property (default "time")
+      --time-in string     given time format used by time property. Some values used by go's time module are possible. (default "RFC3339")
+      --emoji              display levels as emoji instead of text
+      --linebreak string   "always" | only after "json" | "never" (default "always")
+```
+
+Examples:
+
+- For an app using open telemetry:
+  ```bash
+  ./otel-app | axt -m EventName -t Timestamp -l SeverityText
+  ```
+
+- For Elastic Common Schema (ECS):
+  ```bash
+  ./spring-app | axt -t @timestamp -l log.level
+  ```
+
 ## Install
 
-### With go install (recommended)
+### Go install (recommended)
 
 ```bash
 go install github.com/ctholho/axt@latest
-
-# e.g. if you use zsh
-alias axt="$(go env GOPATH)/bin/axt" >> ~/.zshrc
-
-# or if you use bash
-alias axt="$(go env GOPATH)/bin/axt" >> ~/.bashrc
 ```
 
+If GOPATH is not part of your PATH, add axt like this:
 
-### SLSA Level 3 compliant binaries
+```
+echo "alias axt=$(go env GOPATH)/bin/axt" >> ~/.zshrc
+```
+
+### Binaries
 
 Builds in the "Releases" section of this repository are built with the SLSA
 Level 3 Compliant Go builder, which comes with strong guarantees that nobody
@@ -67,17 +105,15 @@ sudo mv axt-darwin-arm64 /usr/local/bin
 After trying to run it on macos for the first time, you need to head over to the
 Security settings and approve axt.
 
+## Verify Provenance
 
-### Verify Provenance
+[ For up to date information head over to [SLSA verifier](https://github.com/slsa-framework/slsa-verifier#available-options) ]
 
-To verify your build binary from the "Releases" follow these steps.
+To verify builds follow these steps:
 
-For up to date information and latest version numbers head over to
-[SLSA verifier](https://github.com/slsa-framework/slsa-verifier#available-options)
+First, download the matching `intoto.jsonl` file for your downloaded binary.
 
-Download the proper `intoto.jsonl` file for your binary.
-
-Install the slsa-verifier
+Install the slsa-verifier:
 
 ```bash
 $ go install github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@v2.7.1
@@ -86,32 +122,19 @@ $ go install github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@v2.7.1
 Then, use the slsa-verifier like this:
 
 ```bash
-slsa-verifier verify-artifact <path to binary> \
-  --provenance-path <path to intoto.jsonl> \
+slsa-verifier verify-artifact <PATH TO BINARY> \
+  --provenance-path <PATH TO INTOTO.JSONL> \
   --source-uri github.com/ctholho/axt \
-  --source-tag <version number with leading v>
+  --source-tag <VERSION NUMBER WITH LEADING v>
 
 # For example:
 slsa-verifier verify-artifact axt-darwin-arm64 \
   --provenance-path axt-darwin-arm64.intoto.jsonl \
   --source-uri github.com/ctholho/axt \
   --source-tag v0.5.2
-
 ```
 
-## Options
+## Roadmap
 
-In case your application uses different property names for time, msg or level
-you can set these with run-time flags.
-
-These run-time flags are available:
-
-```
-  -l, --level string       define name of the level property (default "level")
-  -m, --message string     define name of the message property (default "msg")
-  -t, --time string        define name of the time property (default "time")
-      --time-in string     given time format used by time property. Some values used by go's time module are possible. (default "RFC3339")
-      --emoji              display levels as emoji instead of text
-      --linebreak string   "always" | only after "json" | "never" (default "always")
-```
-
+- [ ] Allow formatting time output more freely
+- [ ] Hide properties with a `--hide` option
