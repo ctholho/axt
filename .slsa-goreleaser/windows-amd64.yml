@@ -11,8 +11,6 @@ goos: windows
 
 goarch: amd64
 
-main: ./cmd/cli.go
-
 # (Optional) Working directory. (default: root of the project)
 # dir: ../
 
