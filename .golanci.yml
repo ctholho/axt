@@ -1,0 +1,83 @@
+version: "2"
+linters:
+  default: all
+  disable:
+    - depguard
+    - err113
+    - exhaustruct
+    - ireturn
+    - noinlineerr
+    - nonamedreturns
+    - tagliatelle
+    - varnamelen
+    - wrapcheck
+    - wsl
+  settings:
+    cyclop:
+      max-complexity: 15
+      package-average: 0
+    funlen:
+      lines: 100
+      statements: 50
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 15
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 4
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - bodyclose
+          - cyclop
+          - dupl
+          - errcheck
+          - errchkjson
+          - forcetypeassert
+          - funlen
+          - gocyclo
+          - gosec
+          - lll
+          - nosnakecase
+    paths:
+      - .idea
+      - builtin$
+      - examples$
+      - third_party$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    paths:
+      - .idea
+      - builtin$
+      - examples$
+      - third_party$
+issues:
+  max-same-issues: 0
+  fix: true
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true
+    checkstyle:
+      path: golangci-lint.xml
+  sort-order:
+    - file

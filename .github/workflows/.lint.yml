@@ -1,0 +1,7 @@
+on:
+  pull_request:
+
+jobs:
+  lint:
+    name: Run golangci-lint
+    uses: golangci/golangci-lint-action@v8.0.0

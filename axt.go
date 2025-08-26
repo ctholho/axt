@@ -25,7 +25,7 @@ import (
 // - pterm color for further use
 func formatLevel(level string, emoji bool) (string, pterm.Color) {
 	upperLevel := strings.ToUpper(level)
-	color := pterm.FgWhite
+	var color pterm.Color
 
 	if emoji {
 		switch upperLevel {
