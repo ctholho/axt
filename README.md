@@ -5,6 +5,7 @@
 axt turns structured logs to something readable on your local dev machine.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/ctholho/axt.svg)](https://pkg.go.dev/github.com/ctholho/axt)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ctholho/axt)](https://goreportcard.com/report/github.com/ctholho/axt)
 
 <hr>
 
