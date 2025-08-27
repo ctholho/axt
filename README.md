@@ -3,16 +3,22 @@
 # Axt
 
 axt turns structured logs to something readable on your local dev machine.
-It's mostly a wrapper for the awesome project [pterm](github.com/pterm)
 
-Some unreadable mess
+[![Go Reference](https://pkg.go.dev/badge/github.com/ctholho/axt.svg)](https://pkg.go.dev/github.com/ctholho/axt)
+
+<hr>
+
+Structured logs are great and your server application shouldn't concern itself
+with displaying readable logs on developer machines.
+
+But ugh, what a mess:
 
 ```
 {"time":"2025-08-24T21:51:45.549605+02:00","level":"INFO","msg":"API request completed","status_code":200,"response_time_ms":127,"response_size_kb":24.7}
 {"time":"2025-08-24T21:51:45.549671+02:00","level":"INFO","msg":"feature-flag:set","dark_mode":true,"beta_features":false,"thingy":null}
 ```
 
-becomes:
+This on the other hand:
 
 ```
  21:53:28.717 INFO  API request completed
@@ -20,7 +26,7 @@ becomes:
                   response_time_ms: 127
                   response_size_kb: 24.7
 
- 21:53:28.717 INFO  Feature flags status
+ 21:53:28.717 INFO  feature-flag:set
                   dark_mode: true
                   beta_features: false
                   thingy: null
@@ -87,7 +93,7 @@ Protips:
 go install github.com/ctholho/axt@latest
 ```
 
-If GOPATH is not part of your PATH, add axt like this:
+If GOPATH is not part of your PATH, add axt globally like this:
 
 ```
 echo "alias axt=$(go env GOPATH)/bin/axt" >> ~/.zshrc
@@ -143,3 +149,5 @@ slsa-verifier verify-artifact axt-darwin-arm64 \
 
 - [ ] Allow formatting time output more freely
 - [ ] Hide properties with a `--hide` option
+- [ ] Color theming
+- [ ] Property highlighting
