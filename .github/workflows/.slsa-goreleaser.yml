@@ -7,12 +7,8 @@ on:
       - "*"
 
 jobs:
-  lint:
-    uses: golangci/golangci-lint-action@v8.0.0
-
   # Generate ldflags dynamically.
   args:
-    needs: lint
     runs-on: ubuntu-latest
     outputs:
       commit-date: ${{ steps.ldflags.outputs.commit-date }}
@@ -31,8 +27,15 @@ jobs:
           echo "version=$(git describe --tags --always --dirty | cut -c2-)" >> "$GITHUB_OUTPUT"
           echo "tree-state=$(if git diff --quiet; then echo "clean"; else echo "dirty"; fi)" >> "$GITHUB_OUTPUT"
 
-  build:
+  lint:
     needs: args
+    runs-on: ubuntu-latest
+    uses: golangci/golangci-lint-action@v8.0.0
+
+  build:
+    needs:
+      - args
+      - lint
     permissions:
       id-token: write # To sign the provenance.
       contents: write # To upload assets to release.
