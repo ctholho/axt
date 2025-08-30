@@ -160,7 +160,7 @@ func setupFlags(cfg *Config) {
 		&cfg.TimeInputFormat,
 		"time-in",
 		cfg.TimeInputFormat,
-		"given time format used by time property. Uses go's time convention.",
+		`format of time property. Uses go's time convention; or use 'Unix' | 'UnixMilli' | 'UnixMicro' for Epoch timestamps.`,
 	)
 	flag.StringVar(&cfg.TimeOutputFormat, "time-out", cfg.TimeOutputFormat, "print time in this format. Uses go's time format convention.")
 }

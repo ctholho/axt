@@ -71,7 +71,7 @@ Additionally, you can configure your output with these options:
 ```
 ```
 ```
-  --time-in string     given time format used by time property. Uses go's time convention (default "RFC3339")
+  --time-in string     given time format used by time property. Uses go's time convention; or use 'Unix' | 'UnixMilli' | 'UnixMicro' for Unix epoch timestamps.(default "RFC3339")
   --time-out string    print time in this format. Uses go's time convention (default "15:04:05.000")
   --emoji              display levels as emoji instead of text
   --linebreak string   "always" | only after "json" | "never" ()
