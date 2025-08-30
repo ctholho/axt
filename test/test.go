@@ -103,6 +103,7 @@ func main() {
 			case slog.LevelKey:
 				a.Key = "logLevel"
 			}
+
 			return a
 		},
 	}))

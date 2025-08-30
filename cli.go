@@ -19,36 +19,15 @@ var (
 	TreeState  = "dirty"
 )
 
-var (
-	msgKeyDefault            = "msg"
-	timeKeyDefault           = "time"
-	levelKeyDefault          = "level"
-	emptyLineStrategyDefault = "always"
-	emojiLevelDefault        = false
-	timeInputFormatDefault   = "RFC3339"
-	timeOutputFormatDefault  = "%02d:%02d:%02d.%03d"
-)
-
 func main() {
-	timeKeyFlag := flag.StringP("time", "t", timeKeyDefault, "define name of the time property")
-	messageKeyFlag := flag.StringP("message", "m", msgKeyDefault, "define name of the message property")
-	levelKeyFlag := flag.StringP("level", "l", levelKeyDefault, "define name of the level property")
-	emptyLineStrategyFlag := flag.String("linebreak", emptyLineStrategyDefault, "\"always\" | only after \"json\" | \"never\"")
-	emojiLevel := flag.Bool("emoji", emojiLevelDefault, "display levels as emoji instead of text")
-	timeInputFormatFlag := flag.String("time-in", timeInputFormatDefault, "given time format used by time property. Some values used by go's time module are possible.")
-	timeOutputFormatFlag := flag.String("time-out", timeOutputFormatDefault, "print time in this format. (WIP!)")
+	cfg := newConfig()
+	setupFlags(cfg)
 
 	var showVersion bool
+
 	flag.BoolVarP(&showVersion, "version", "v", false, "Show version information")
 
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "axt | structured logs but forcibly gemütlich | %s\n\n", Version)
-		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  axt [options]\n\n")
-		fmt.Fprintf(os.Stderr, "Options:\n")
-		flag.PrintDefaults()
-	}
-
+	flag.Usage = printHelp
 	flag.Parse()
 
 	if showVersion {
@@ -60,40 +39,44 @@ func main() {
 
 	for scanner.Scan() {
 		line := scanner.Text()
+
 		var entry map[string]any
-		if err := json.Unmarshal([]byte(line), &entry); err != nil {
-			fmt.Printf("🪵  %s\n%s", line, formatNewLine(*emptyLineStrategyFlag, false))
+
+		err := json.Unmarshal([]byte(line), &entry)
+		if err != nil {
+			fmt.Printf("🪵  %s\n%s", line, formatNewLine(cfg.EmptyLineStrategy, false))
+
 			continue
 		}
 
 		// TIME
-		timeValue, _ := entry[*timeKeyFlag].(string)
+		timeValue, _ := entry[cfg.TimeKey].(string)
 		timeColor := pterm.FgDarkGray
-		t := formatTime(timeValue, *timeInputFormatFlag, *timeOutputFormatFlag)
-		formattedTime := pterm.Color(timeColor).Sprint(t)
+		t := formatTime(timeValue, cfg.TimeInputFormat, cfg.TimeOutputFormat)
+		formattedTime := timeColor.Sprint(t)
 
 		// LEVEL
-		levelValue, ok := entry[*levelKeyFlag].(string)
+		levelValue, ok := entry[cfg.LevelKey].(string)
 		if levelValue == "" || !ok {
-			// Should never happen, but who knows how people configure their logger
 			levelValue = "NO LEVEL"
 		}
-		formattedLevel, levelColor := formatLevel(levelValue, *emojiLevel)
+
+		formattedLevel, levelColor := formatLevel(levelValue, cfg.EmojiLevel)
 
 		// MESSAGE
-		messageValue, _ := entry[*messageKeyFlag].(string)
-		formattedMessage := pterm.Color(levelColor).Sprint(messageValue)
+		messageValue, _ := entry[cfg.MessageKey].(string)
+		formattedMessage := levelColor.Sprint(messageValue)
 
-		// OVERALL FORMAT
+		// OVERALL FORMAT of first line
 		fmt.Printf(" %s %s %s\n", formattedTime, formattedLevel, formattedMessage)
 
-		// Remove standard fields
-		delete(entry, *timeKeyFlag)
-		delete(entry, *messageKeyFlag)
-		delete(entry, *levelKeyFlag)
+		// Remove standard fields to avoid duplication
+		delete(entry, cfg.TimeKey)
+		delete(entry, cfg.MessageKey)
+		delete(entry, cfg.LevelKey)
 
 		lineColor := pterm.FgGray
-		verticalLine := pterm.Color(lineColor).Sprint("               ") // Add alignment for short events
+		verticalLine := lineColor.Sprint("               ") // Add alignment for short events
 
 		var logLines []string
 
@@ -104,40 +87,22 @@ func main() {
 				formattedValue := formatValue(value)
 				formattedValueLines := strings.Split(formattedValue, "\n")
 				logLines = append(logLines, fmt.Sprintf("%s   %s: %s", verticalLine, formattedKey, formattedValueLines[0]))
+
 				for _, line := range formattedValueLines[1:] {
 					logLines = append(logLines, fmt.Sprintf("%s   %s", verticalLine, line))
 				}
 			}
 		}
 
-		// Show a pretty vertical line if the event is longer
-		if len(logLines) > 3 {
-			outerColor := pterm.NewRGB(70, 70, 70)
-			innerColor := pterm.NewRGB(150, 150, 150)
+		// Show a pretty vertical line if there's some properties (at least 3)
+		addBorder(logLines, verticalLine)
 
-			// Fade for the line
-			for i, line := range logLines {
-				var currentVerticalLine string
-				if i == 0 {
-					currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(i), innerColor, outerColor).Sprint("              ┌")
-				} else if i == len(logLines)-1 {
-					currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(i), innerColor, outerColor).Sprint("              └")
-				} else {
-					currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(i), innerColor, outerColor).Sprint("              │")
-				}
-				fmt.Println(strings.Replace(line, verticalLine, currentVerticalLine, 1))
-			}
-		} else {
-			for _, line := range logLines {
-				fmt.Println(line)
-			}
-		}
-
-		// Maybe an empty line after each event
-		fmt.Printf("%s", formatNewLine(*emptyLineStrategyFlag, true))
-
+		// Maybe add an empty line after each event
+		fmt.Printf("%s", formatNewLine(cfg.EmptyLineStrategy, true))
 	}
-	if err := scanner.Err(); err != nil {
+
+	err := scanner.Err()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "error reading input: %v\n", err)
 		os.Exit(1)
 	}
@@ -153,4 +118,49 @@ func printVersion() {
 	fmt.Printf("Commit: %s\n", Commit)
 	fmt.Printf("Built at: %s\n", CommitDate)
 	fmt.Printf("Tree state: %s\n", TreeState)
+}
+
+func printHelp() {
+	fmt.Fprintf(os.Stderr, "axt | structured logs but forcibly gemütlich | %s\n\n", Version)
+	fmt.Fprintf(os.Stderr, "Usage:\n")
+	fmt.Fprintf(os.Stderr, "  axt [options]\n\n")
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	flag.PrintDefaults()
+}
+
+type Config struct {
+	TimeKey           string
+	MessageKey        string
+	LevelKey          string
+	EmptyLineStrategy string
+	EmojiLevel        bool
+	TimeInputFormat   string
+	TimeOutputFormat  string
+}
+
+func newConfig() *Config {
+	return &Config{
+		TimeKey:           "time",
+		MessageKey:        "msg",
+		LevelKey:          "level",
+		EmptyLineStrategy: "always",
+		EmojiLevel:        false,
+		TimeInputFormat:   "RFC3339",
+		TimeOutputFormat:  "15:04:05.000",
+	}
+}
+
+func setupFlags(cfg *Config) {
+	flag.StringVarP(&cfg.TimeKey, "time", "t", cfg.TimeKey, "define name of the time property")
+	flag.StringVarP(&cfg.MessageKey, "message", "m", cfg.MessageKey, "define name of the message property")
+	flag.StringVarP(&cfg.LevelKey, "level", "l", cfg.LevelKey, "define name of the level property")
+	flag.StringVar(&cfg.EmptyLineStrategy, "linebreak", cfg.EmptyLineStrategy, "\"always\" | only after \"json\" | \"never\"")
+	flag.BoolVar(&cfg.EmojiLevel, "emoji", cfg.EmojiLevel, "display levels as emoji instead of text")
+	flag.StringVar(
+		&cfg.TimeInputFormat,
+		"time-in",
+		cfg.TimeInputFormat,
+		"given time format used by time property. Uses go's time convention.",
+	)
+	flag.StringVar(&cfg.TimeOutputFormat, "time-out", cfg.TimeOutputFormat, "print time in this format. Uses go's time format convention.")
 }
