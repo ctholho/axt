@@ -2,16 +2,11 @@ version: "2"
 linters:
   default: all
   disable:
-    - depguard
-    - err113
-    - exhaustruct
-    - ireturn
-    - noinlineerr
-    - nonamedreturns
-    - tagliatelle
-    - varnamelen
-    - wrapcheck
     - wsl
+    - mnd
+    - revive
+    - gochecknoglobals
+    - forbidigo
   settings:
     cyclop:
       max-complexity: 15
@@ -39,6 +34,14 @@ linters:
       allow-first-in-block: true
       allow-whole-block: false
       branch-max-lines: 4
+    depguard:
+      rules:
+        main:
+          allow:
+            - $gostd
+            - github.com/pterm/pterm
+            - github.com/spf13/pflag
+            - github.com/tidwall/pretty
   exclusions:
     rules:
       - path: _test\.go
@@ -59,6 +62,7 @@ linters:
       - builtin$
       - examples$
       - third_party$
+      - test/
 formatters:
   enable:
     - gofmt

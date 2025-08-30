@@ -12,118 +12,65 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/tidwall/pretty"
 )
 
+// levelInfo holds the display properties for a specific log level.
+type levelInfo struct {
+	Color pterm.Color
+	Emoji string
+	Text  string
+}
+
+// levelMap maps uppercase log level strings to their display properties.
+// It also includes common aliases like "WARN" for "WARNING".
+var levelMap = map[string]levelInfo{
+	"TRACE":    {Color: pterm.FgBlue, Emoji: "🐾 ", Text: "TRACE"},
+	"DEBUG":    {Color: pterm.FgGreen, Emoji: "🦠 ", Text: "DEBUG"},
+	"INFO":     {Color: pterm.FgDefault, Emoji: "ℹ️ ", Text: "INFO "},
+	"WARNING":  {Color: pterm.FgYellow, Emoji: "⚠️ ", Text: "WARN "},
+	"WARN":     {Color: pterm.FgYellow, Emoji: "⚠️ ", Text: "WARN "},
+	"ERROR":    {Color: pterm.FgRed, Emoji: "❌ ", Text: "ERR  "},
+	"ERR":      {Color: pterm.FgRed, Emoji: "❌ ", Text: "ERR  "},
+	"CRITICAL": {Color: pterm.FgMagenta, Emoji: "❌ ", Text: "CRITICAL"},
+	"FATAL":    {Color: pterm.FgMagenta, Emoji: "❌ ", Text: "FATAL"},
+}
+
 // formatLevel formts the log level
 //
 // Returns:
 // - uppercased and colorized string
-// - pterm color for further use
-func formatLevel(level string, emoji bool) (string, pterm.Color) {
+// - pterm color for further use.
+func formatLevel(level string, useEmoji bool) (string, pterm.Color) {
 	upperLevel := strings.ToUpper(level)
-	var color pterm.Color
 
-	if emoji {
-		switch upperLevel {
-		case "TRACE":
-			color = pterm.FgBlue
-			upperLevel = "🐾 "
-		case "DEBUG":
-			color = pterm.FgGreen
-			upperLevel = "🦠 "
-		case "INFO":
-			color = pterm.FgDefault
-			upperLevel = "ℹ️ "
-		case "WARNING", "WARN":
-			color = pterm.FgYellow
-			upperLevel = "⚠️ "
-		case "ERROR", "ERR":
-			color = pterm.FgRed
-			upperLevel = "❌ "
-		case "CRITICAL", "FATAL":
-			color = pterm.FgMagenta
-		default:
-			color = pterm.FgWhite
+	if info, ok := levelMap[upperLevel]; ok {
+		formattedLevel := info.Color.Sprint(info.Text)
+		if useEmoji && info.Emoji != "" {
+			formattedLevel = info.Emoji
 		}
-	} else {
-		switch upperLevel {
-		case "TRACE":
-			color = pterm.FgBlue
-			upperLevel = "TRACE"
-		case "DEBUG":
-			color = pterm.FgGreen
-			upperLevel = "DEBUG"
-		case "INFO":
-			color = pterm.FgDefault
-			upperLevel = "INFO "
-		case "WARNING", "WARN":
-			color = pterm.FgYellow
-			upperLevel = "WARN "
-		case "ERROR", "ERR":
-			color = pterm.FgRed
-			upperLevel = "ERR  "
-		case "CRITICAL", "FATAL":
-			color = pterm.FgMagenta
-		default:
-			color = pterm.FgWhite
-		}
+
+		return formattedLevel, info.Color
 	}
 
-	formattedLevel := pterm.Color(color).Sprint(upperLevel)
-
-	return formattedLevel, color
+	return upperLevel, pterm.FgWhite
 }
 
-// formatTime reformats time according to incoming `format` and output
-func formatTime(timeStr string, format string, output string) string {
-	formats := map[string]string{
-		"RFC3339":     time.RFC3339,
-		"RFC3339Nano": time.RFC3339Nano,
-		"ANSIC":       time.ANSIC,
-		"UnixDate":    time.UnixDate,
-		// "2006-01-02T15:04:05.999Z07:00",
-		// "2006-01-02 15:04:05.999",
-		// time.RubyDate,
-		// time.RFC822,
-		// time.RFC822Z,
-		// time.RFC850,
-		// time.RFC1123,
-		// time.RFC1123Z,
-		// time.Kitchen,
-		// time.Stamp,
-		// time.StampMilli,
-		// time.StampMicro,
-		// time.StampNano,
-	}
-
-	chosenFormat, ok := formats[format]
-	if !ok {
-		return timeStr
-	}
-
-	t, err := time.Parse(chosenFormat, timeStr)
-	if err != nil {
-		return timeStr
-	}
-
-	return fmt.Sprintf(output, t.Hour(), t.Minute(), t.Second(), t.Nanosecond()/1000000)
-}
-
-// formatValue formats the value based on its type
+// formatValue formats the value based on its type.
 func formatValue(value any) string {
 	jsonBytes, err := json.Marshal(value)
 	if err != nil {
 		return pterm.FgRed.Sprint(fmt.Sprintf("%v", value))
 	}
+
 	beautiful := string(pretty.Color(pretty.Pretty(jsonBytes), jsonColor()))
+
 	return strings.TrimSuffix(beautiful, "\n")
 }
 
-// jsonColor returns a pretty style for JSON output
+// jsonColor returns a pretty style for JSON output.
 func jsonColor() *pretty.Style {
 	return &pretty.Style{
 		Key:      [2]string{"\x1B[1m\x1B[90m", "\x1B[0m"},
@@ -134,18 +81,20 @@ func jsonColor() *pretty.Style {
 		Null:     [2]string{"\x1B[2m", "\x1B[0m"},
 		Escape:   [2]string{"\x1B[35m", "\x1B[0m"},
 		Brackets: [2]string{"\x1B[1m", "\x1B[0m"},
-		Append: func(dst []byte, c byte) []byte {
-			if c < ' ' && (c != '\r' && c != '\n' && c != '\t' && c != '\v') {
+		Append: func(dst []byte, cur byte) []byte {
+			if cur < ' ' && (cur != '\r' && cur != '\n' && cur != '\t' && cur != '\v') {
 				dst = append(dst, "\\u00"...)
-				dst = append(dst, hexp((c>>4)&0xF))
-				return append(dst, hexp((c)&0xF))
+				dst = append(dst, hexp((cur>>4)&0xF))
+
+				return append(dst, hexp((cur)&0xF))
 			}
-			return append(dst, c)
+
+			return append(dst, cur)
 		},
 	}
 }
 
-// hexp converts a byte to its hexadecimal representation
+// hexp converts a byte to its hexadecimal representation.
 func hexp(p byte) byte {
 	switch {
 	case p < 10:
@@ -164,6 +113,7 @@ func formatNewLine(strategy string, structured bool) string {
 		if structured {
 			return "\n"
 		}
+
 		return ""
 	case "never":
 		return ""
