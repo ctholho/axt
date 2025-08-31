@@ -19,11 +19,11 @@ func addBorder(logLines []string, verticalLine string) {
 
 			switch index {
 			case 0:
-				currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(index), innerColor, outerColor).Sprint("              ┌")
+				currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(index), innerColor, outerColor).Sprint("     ┌")
 			case len(logLines) - 1:
-				currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(index), innerColor, outerColor).Sprint("              └")
+				currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(index), innerColor, outerColor).Sprint("     └")
 			default:
-				currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(index), innerColor, outerColor).Sprint("              │")
+				currentVerticalLine = outerColor.Fade(0, float32(len(logLines)-1), float32(index), innerColor, outerColor).Sprint("     │")
 			}
 
 			fmt.Println(strings.Replace(line, verticalLine, currentVerticalLine, 1))
