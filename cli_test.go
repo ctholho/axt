@@ -87,7 +87,7 @@ func TestMainFunction(t *testing.T) {
 			useUTC: false,
 			input:  `{"time":"2025-08-24T21:51:45.549605+02:00","level":"INFO","msg":"API request completed","status_code":200,"response_time_ms":127}`,
 			expected: `
- 21:51:45.549 INFO  API request completed
+ 21:51:45.549   INFO   API request completed
                    status_code: 200
                    response_time_ms: 127
 `,
@@ -105,7 +105,7 @@ func TestMainFunction(t *testing.T) {
 			useUTC: false,
 			input:  `{"@timestamp":"2025-08-24T21:51:45.549Z","log.level":"ERROR","message":"User authentication failed","error.message":"invalid credentials"}`,
 			expected: `
- 21:51:45.549 ERR   User authentication failed
+ 21:51:45.549  ERROR   User authentication failed
                    error.message: "invalid credentials"
 `,
 		},
@@ -124,7 +124,7 @@ func TestMainFunction(t *testing.T) {
 			useUTC: false,
 			input:  `{"time":"2025-08-24T21:51:45.549Z","level":"INFO","msg":"Request received","trace_id":"xyz","user_agent":"test-runner","important": true}`,
 			expected: `
- 21:51:45.549 INFO  Request received
+ 21:51:45.549   INFO   Request received
                    important: true
 `,
 		},
@@ -134,7 +134,7 @@ func TestMainFunction(t *testing.T) {
 			useUTC: true,
 			input:  `{"time":"2025-08-24T21:51:45.549Z","level":"DEBUG","msg":"whatever floats your boat time format test"}`,
 			expected: `
- 2025/08/24 21h51m45s.549 DEBUG whatever floats your boat time format test
+ 2025/08/24 21h51m45s.549  DEBUG   whatever floats your boat time format test
 `,
 		},
 		{
@@ -143,7 +143,7 @@ func TestMainFunction(t *testing.T) {
 			useUTC: true,
 			input:  `{"time":"1756555555123","level":"DEBUG","msg":"Timestamp test"}`,
 			expected: `
-		  12:05:55.123 DEBUG Timestamp test
+		  12:05:55.123  DEBUG   Timestamp test
 		 `,
 		},
 		{
@@ -152,7 +152,7 @@ func TestMainFunction(t *testing.T) {
 			useUTC: true,
 			input:  `{"time":"1756555555.123","level":"DEBUG","msg":"Timestamp test"}`,
 			expected: `
-		  12:05:55.123 DEBUG Timestamp test
+		  12:05:55.123  DEBUG   Timestamp test
 		 `,
 		},
 	}

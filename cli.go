@@ -49,11 +49,20 @@ func main() {
 			continue
 		}
 
+		// Remove properties if a user wants to hide them
+		hideProperties(entry, cfg.HiddenKeys...)
+
 		// TIME
 		timeValue, _ := entry[cfg.TimeKey].(string)
 		timeColor := pterm.FgDarkGray
-		t := formatTime(timeValue, cfg.TimeInputFormat, cfg.TimeOutputFormat)
-		formattedTime := timeColor.Sprint(t)
+		formattedTime := formatTime(timeValue, cfg.TimeInputFormat, cfg.TimeOutputFormat)
+
+		var formattedTimeWithAlign string
+		if timeValue == "" {
+			formattedTimeWithAlign = ""
+		} else {
+			formattedTimeWithAlign = timeColor.Sprintf(`%s `, formattedTime)
+		}
 
 		// LEVEL
 		levelValue, ok := entry[cfg.LevelKey].(string)
@@ -68,24 +77,23 @@ func main() {
 		formattedMessage := levelColor.Sprint(messageValue)
 
 		// OVERALL FORMAT of first line
-		fmt.Printf(" %s %s %s\n", formattedTime, formattedLevel, formattedMessage)
+		fmt.Printf("%s%s %s\n", formattedTimeWithAlign, formattedLevel, formattedMessage)
 
 		// Remove standard properties to avoid duplication if we display them on the
-		// first line already
+		// first line
 		keysToHide := []string{cfg.TimeKey, cfg.LevelKey, cfg.MessageKey}
-		keysToHide = append(keysToHide, cfg.HiddenKeys...)
 		hideProperties(entry, keysToHide...)
 
 		lineColor := pterm.FgGray
 		// Add alignment
-		vertAlign := lineColor.Sprint("               ")
+		vertAlign := lineColor.Sprint("      ")
 
 		var logLines []string
 
 		// add extra fields if any
 		if len(entry) > 0 {
 			for key, value := range entry {
-				formattedKey := pterm.NewStyle(pterm.FgWhite, pterm.Bold).Sprint(key)
+				formattedKey := pterm.NewStyle(pterm.FgDefault).Sprint(key)
 				formattedValue := formatValue(value)
 				formattedValueLines := strings.Split(formattedValue, "\n")
 				logLines = append(logLines, fmt.Sprintf("%s   %s: %s", vertAlign, formattedKey, formattedValueLines[0]))
