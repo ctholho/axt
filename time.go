@@ -69,7 +69,7 @@ func formatTime(timeStr, inputFormat, outputFormat string) string {
 
 	switch layout {
 	case unixStrategy:
-		parsedTime, err = parseUnix(layout, timeStr)
+		parsedTime, err = parseUnix(inputFormat, timeStr)
 	default:
 		parsedTime, err = time.Parse(layout, timeStr)
 	}
