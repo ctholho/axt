@@ -13,7 +13,7 @@ import (
 
 var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
-// ansiRegex strips ANSI color codes from the output
+// ansiRegex strips ANSI color codes from the output.
 func stripAnsi(s string) string {
 	return ansiRegex.ReplaceAllString(s, "")
 }
@@ -21,52 +21,49 @@ func stripAnsi(s string) string {
 // captureOutput runs the main function with specified arguments and input,
 // and returns the captured standard output.
 func captureOutput(t *testing.T, args []string, input string) string {
+	t.Helper()
 	// Keep track of the original os variables to restore them later
 	oldArgs := os.Args
 	oldStdin := os.Stdin
 	oldStdout := os.Stdout
+
 	defer func() {
 		os.Args = oldArgs
 		os.Stdin = oldStdin
 		os.Stdout = oldStdout
 	}()
 
-	// Create a pipe to simulate stdin.
-	// We'll write our test input to the writer end.
 	rIn, wIn, err := os.Pipe()
 	if err != nil {
 		t.Fatalf("failed to create stdin pipe: %v", err)
 	}
+
 	os.Stdin = rIn
 
-	// Create a pipe to capture stdout.
-	// We'll read the application's output from the reader end.
 	rOut, wOut, err := os.Pipe()
 	if err != nil {
 		t.Fatalf("failed to create stdout pipe: %v", err)
 	}
+
 	os.Stdout = wOut
 
-	// Set the command-line arguments for this test case.
-	// The first argument is always the program name.
 	os.Args = append([]string{"axt"}, args...)
 
-	// Write the test input to our stdin pipe in a separate goroutine.
-	// This prevents the test from deadlocking.
 	go func() {
 		defer wIn.Close()
-		_, err := io.WriteString(wIn, input)
+
+		_, err := wIn.WriteString(input)
 		if err != nil {
 			t.Errorf("failed to write to stdin pipe: %v", err)
 		}
 	}()
 
-	// Run the application's main function.
 	main()
 
-	// Close the stdout writer and read the captured output.
 	wOut.Close()
+
 	var buf bytes.Buffer
+
 	_, err = io.Copy(&buf, rOut)
 	if err != nil {
 		t.Errorf("failed to read from stdout pipe: %v", err)
@@ -75,6 +72,7 @@ func captureOutput(t *testing.T, args []string, input string) string {
 	return buf.String()
 }
 
+//nolint:paralleltest // meddles with system globals and can't run in parallel
 func TestMainFunction(t *testing.T) {
 	testCases := []struct {
 		name     string
@@ -159,20 +157,17 @@ func TestMainFunction(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.useUTC {
-				setTestTimezone(t, "UTC")
-			}
-
+	for _, testCase := range testCases {
+		//nolint:paralleltest // meddles with system globals and can't run in parallel
+		t.Run(testCase.name, func(t *testing.T) {
 			// Reset the command-line flags before each test run.
 			// The main() function registers flags, and calling it in a loop
 			// would cause a "flag redefined" panic if we didn't reset.
 			pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
 
-			actualRaw := captureOutput(t, tc.args, tc.input)
+			actualRaw := captureOutput(t, testCase.args, testCase.input)
 			actualClean := strings.TrimSpace(stripAnsi(actualRaw))
-			expectedClean := strings.TrimSpace(tc.expected)
+			expectedClean := strings.TrimSpace(testCase.expected)
 
 			expectedLines := strings.Split(expectedClean, "\n")
 			actualLines := strings.Split(actualClean, "\n")
@@ -180,6 +175,7 @@ func TestMainFunction(t *testing.T) {
 			// Compare the first line (the header) directly
 			if strings.TrimSpace(actualLines[0]) != strings.TrimSpace(expectedLines[0]) {
 				t.Errorf("Header line mismatch.\n--- Expected ---\n%s\n--- Actual ---\n%s", expectedLines[0], actualLines[0])
+
 				return
 			}
 
@@ -189,12 +185,15 @@ func TestMainFunction(t *testing.T) {
 				for _, expectedLine := range expectedLines[1:] {
 					trimmedExpected := strings.TrimSpace(expectedLine)
 					found := false
+
 					for _, actualLine := range actualLines[1:] {
 						if strings.TrimSpace(actualLine) == trimmedExpected {
 							found = true
+
 							break
 						}
 					}
+
 					if !found {
 						t.Errorf("Expected property line not found in output.\n--- Missing Line ---\n%s\n--- Actual Output ---\n%s", trimmedExpected, actualClean)
 					}
@@ -202,24 +201,4 @@ func TestMainFunction(t *testing.T) {
 			}
 		})
 	}
-}
-
-// setTestTimezone sets the local timezone for the duration of a test.
-func setTestTimezone(t *testing.T, tz string) {
-	// t.Helper() marks this function as a test helper.
-	// When a test fails, the file and line number of the caller will be reported,
-	// not the location inside this helper.
-	t.Helper()
-
-	// Get the original timezone to restore it later
-	originalTZ := os.Getenv("TZ")
-
-	// Set the desired timezone
-	os.Setenv("TZ", tz)
-
-	// Use t.Cleanup to restore the original timezone after the test is done.
-	// This function will be called automatically at the end of the test.
-	t.Cleanup(func() {
-		os.Setenv("TZ", originalTZ)
-	})
 }
