@@ -19,19 +19,20 @@ Structured logs are great. But ugh, what a mess:
 Your server app shouldn't concern itself with making logs useable on dev
 machines. But you really want something like this:
 
-```
- 21:53:28.717 INFO  API request completed
-                  status_code: 200
-                  response_time_ms: 127
-                  response_size_kb: 24.7
-
- 21:53:28.717 INFO  feature-flag:set
-                  dark_mode: true
-                  beta_features: false
-                  thingy: null
-```
-
-(preferably with some colors sprinkled in)
+<table align="center">
+  <tr>
+    <td align="center">
+      <img width="469" height="483" alt="axt-hide-time" src="https://github.com/user-attachments/assets/2e3915b1-24ae-449c-9dbc-d181fd8b2fde" />
+      <br>
+      <em>Hide timestamps with `--hide time`</em>
+    </td>
+    <td align="center">
+      <img width="469" height="483" alt="axt-emoji" src="https://github.com/user-attachments/assets/a406e7ae-cc74-40fb-a8a6-3354dfd3e631" />
+      <br>
+      <em>Use emojis for log levels with `--emoji`</em>
+    </td>
+  </tr>
+</table>
 
 And you want to highlight if someone leaves in a nasty unstructured log:
 
