@@ -55,12 +55,13 @@ func main() {
 		// TIME
 		timeValue, _ := entry[cfg.TimeKey].(string)
 		timeColor := pterm.FgDarkGray
-		t := formatTime(timeValue, cfg.TimeInputFormat, cfg.TimeOutputFormat)
-		var formattedTime string
+		formattedTime := formatTime(timeValue, cfg.TimeInputFormat, cfg.TimeOutputFormat)
+
+		var formattedTimeWithAlign string
 		if timeValue == "" {
-			formattedTime = ""
+			formattedTimeWithAlign = ""
 		} else {
-			formattedTime = timeColor.Sprintf(`%s `, t)
+			formattedTimeWithAlign = timeColor.Sprintf(`%s `, formattedTime)
 		}
 
 		// LEVEL
@@ -76,7 +77,7 @@ func main() {
 		formattedMessage := levelColor.Sprint(messageValue)
 
 		// OVERALL FORMAT of first line
-		fmt.Printf("%s%s %s\n", formattedTime, formattedLevel, formattedMessage)
+		fmt.Printf("%s%s %s\n", formattedTimeWithAlign, formattedLevel, formattedMessage)
 
 		// Remove standard properties to avoid duplication if we display them on the
 		// first line
@@ -86,7 +87,6 @@ func main() {
 		lineColor := pterm.FgGray
 		// Add alignment
 		vertAlign := lineColor.Sprint("      ")
-		// vertAlign := lineColor.Sprint("               ")
 
 		var logLines []string
 

@@ -29,15 +29,69 @@ type levelInfo struct {
 // levelMap maps uppercase log level strings to their display properties.
 // It also includes common aliases like "WARN" for "WARNING".
 var levelMap = map[string]levelInfo{
-	"TRACE":    {Align: true, Style: pterm.NewStyle(pterm.BgBlue, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgBlue, Emoji: "🐾 ", Text: " TRACE "},
-	"DEBUG":    {Align: true, Style: pterm.NewStyle(pterm.BgGreen, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgGreen, Emoji: "🦠 ", Text: " DEBUG "},
-	"INFO":     {Align: false, Style: pterm.NewStyle(pterm.BgBlue, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgDefault, Emoji: "ℹ️ ", Text: "  INFO  "},
-	"WARN":     {Align: false, Style: pterm.NewStyle(pterm.BgYellow, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgYellow, Emoji: "⚠️ ", Text: "  WARN  "},
-	"WARNING":  {Align: true, Style: pterm.NewStyle(pterm.BgYellow, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgYellow, Emoji: "⚠️ ", Text: "WARNING"},
-	"ERROR":    {Align: true, Style: pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgRed, Emoji: "❌ ", Text: " ERROR "},
-	"ERR":      {Align: true, Style: pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgRed, Emoji: "❌ ", Text: "  ERR  "},
-	"FATAL":    {Align: true, Style: pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgMagenta, Emoji: "❌ ", Text: " FATAL "},
-	"CRITICAL": {Align: false, Style: pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold), MainColor: pterm.FgMagenta, Emoji: "❌ ", Text: "CRITICAL"},
+	"TRACE": {
+		Align:     true,
+		Style:     pterm.NewStyle(pterm.BgBlue, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgBlue,
+		Emoji:     "🐾 ",
+		Text:      " TRACE ",
+	},
+	"DEBUG": {
+		Align:     true,
+		Style:     pterm.NewStyle(pterm.BgGreen, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgGreen,
+		Emoji:     "🦠 ",
+		Text:      " DEBUG ",
+	},
+	"INFO": {
+		Align:     false,
+		Style:     pterm.NewStyle(pterm.BgBlue, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgDefault,
+		Emoji:     "ℹ️ ",
+		Text:      "  INFO  ",
+	},
+	"WARN": {
+		Align:     false,
+		Style:     pterm.NewStyle(pterm.BgYellow, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgYellow,
+		Emoji:     "⚠️ ",
+		Text:      "  WARN  ",
+	},
+	"WARNING": {
+		Align:     true,
+		Style:     pterm.NewStyle(pterm.BgYellow, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgYellow,
+		Emoji:     "⚠️ ",
+		Text:      "WARNING",
+	},
+	"ERROR": {
+		Align:     true,
+		Style:     pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgRed,
+		Emoji:     "❌ ",
+		Text:      " ERROR ",
+	},
+	"ERR": {
+		Align:     true,
+		Style:     pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgRed,
+		Emoji:     "❌ ",
+		Text:      "  ERR  ",
+	},
+	"FATAL": {
+		Align:     true,
+		Style:     pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgMagenta,
+		Emoji:     "❌ ",
+		Text:      " FATAL ",
+	},
+	"CRITICAL": {
+		Align:     false,
+		Style:     pterm.NewStyle(pterm.BgRed, pterm.FgBlack, pterm.Bold),
+		MainColor: pterm.FgMagenta,
+		Emoji:     "❌ ",
+		Text:      "CRITICAL",
+	},
 }
 
 // formatLevel formts the log level
@@ -55,7 +109,7 @@ func formatLevel(level string, useEmoji bool) (string, pterm.Color) {
 		}
 
 		if info.Align {
-			formattedLevel = fmt.Sprintf("%s ", formattedLevel)
+			formattedLevel += " "
 		}
 
 		return formattedLevel, info.MainColor
