@@ -74,7 +74,8 @@ Additionally, you can configure your output with these options:
   --time-in string     given time format used by time property. Uses go's time convention; or use 'Unix' | 'UnixMilli' | 'UnixMicro' for Unix epoch timestamps.(default "RFC3339")
   --time-out string    print time in this format. Uses go's time convention (default "15:04:05.000")
   --emoji              display levels as emoji instead of text
-  --linebreak string   "always" | only after "json" | "never" ()
+  --linebreak string   "always" | only after "json" | "never" (default: always)
+  --hide string        hide a property. Use the flag multiple times to hide more than one.
 ```
 
 For defining your own time input and output format refer to the go documentation of the [time format module](https://go.dev/src/time/format.go)
@@ -101,8 +102,6 @@ Protips:
 - Alias axt with your runtime flags to a command that makes it shorter to use
   ```bash
   "alias and-my-axt=axt -m EventName -t Timestamp -l SeverityText --time-in Unix --time-out 15:04:05.000000 --emoji --linebreak never"
-  ```
-  ```
   ```
 
 - Add the pipe through axt in a Makefile of your project for the benefit of your colleagues
@@ -167,9 +166,14 @@ slsa-verifier verify-artifact axt-darwin-arm64 \
   --source-tag v0.5.2
 ```
 
+## Development
+
+As a handy helper during development use `debug/debug.go` to simulate a server.
+
+1. Build the axt binary with `go build -o axt`
+2. Use the binary on the debug file: `go run debug/debug.go | ./axt
+
 ## Roadmap
 
-- [x] Allow formatting time output more freely
-- [ ] Hide properties with a `--hide` option
 - [ ] Color theming
 - [ ] Property highlighting

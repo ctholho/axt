@@ -70,13 +70,15 @@ func main() {
 		// OVERALL FORMAT of first line
 		fmt.Printf(" %s %s %s\n", formattedTime, formattedLevel, formattedMessage)
 
-		// Remove standard fields to avoid duplication
-		delete(entry, cfg.TimeKey)
-		delete(entry, cfg.MessageKey)
-		delete(entry, cfg.LevelKey)
+		// Remove standard properties to avoid duplication if we display them on the
+		// first line already
+		keysToHide := []string{cfg.TimeKey, cfg.LevelKey, cfg.MessageKey}
+		keysToHide = append(keysToHide, cfg.HiddenKeys...)
+		hideProperties(entry, keysToHide...)
 
 		lineColor := pterm.FgGray
-		verticalLine := lineColor.Sprint("               ") // Add alignment for short events
+		// Add alignment
+		vertAlign := lineColor.Sprint("               ")
 
 		var logLines []string
 
@@ -86,16 +88,16 @@ func main() {
 				formattedKey := pterm.NewStyle(pterm.FgWhite, pterm.Bold).Sprint(key)
 				formattedValue := formatValue(value)
 				formattedValueLines := strings.Split(formattedValue, "\n")
-				logLines = append(logLines, fmt.Sprintf("%s   %s: %s", verticalLine, formattedKey, formattedValueLines[0]))
+				logLines = append(logLines, fmt.Sprintf("%s   %s: %s", vertAlign, formattedKey, formattedValueLines[0]))
 
 				for _, line := range formattedValueLines[1:] {
-					logLines = append(logLines, fmt.Sprintf("%s   %s", verticalLine, line))
+					logLines = append(logLines, fmt.Sprintf("%s   %s", vertAlign, line))
 				}
 			}
 		}
 
 		// Show a pretty vertical line if there's some properties (at least 3)
-		addBorder(logLines, verticalLine)
+		addBorder(logLines, vertAlign)
 
 		// Maybe add an empty line after each event
 		fmt.Printf("%s", formatNewLine(cfg.EmptyLineStrategy, true))
@@ -136,6 +138,7 @@ type Config struct {
 	EmojiLevel        bool
 	TimeInputFormat   string
 	TimeOutputFormat  string
+	HiddenKeys        []string
 }
 
 func newConfig() *Config {
@@ -147,20 +150,33 @@ func newConfig() *Config {
 		EmojiLevel:        false,
 		TimeInputFormat:   "RFC3339",
 		TimeOutputFormat:  "15:04:05.000",
+		HiddenKeys:        []string{},
 	}
 }
 
 func setupFlags(cfg *Config) {
-	flag.StringVarP(&cfg.TimeKey, "time", "t", cfg.TimeKey, "define name of the time property")
-	flag.StringVarP(&cfg.MessageKey, "message", "m", cfg.MessageKey, "define name of the message property")
-	flag.StringVarP(&cfg.LevelKey, "level", "l", cfg.LevelKey, "define name of the level property")
+	flag.StringVarP(&cfg.TimeKey, "time", "t", cfg.TimeKey, "Name of the time property")
+	flag.StringVarP(&cfg.MessageKey, "message", "m", cfg.MessageKey, "Name of the message property")
+	flag.StringVarP(&cfg.LevelKey, "level", "l", cfg.LevelKey, "Name of the level property")
 	flag.StringVar(&cfg.EmptyLineStrategy, "linebreak", cfg.EmptyLineStrategy, "\"always\" | only after \"json\" | \"never\"")
-	flag.BoolVar(&cfg.EmojiLevel, "emoji", cfg.EmojiLevel, "display levels as emoji instead of text")
+	flag.BoolVar(&cfg.EmojiLevel, "emoji", cfg.EmojiLevel, "Display levels as emoji instead of text")
 	flag.StringVar(
 		&cfg.TimeInputFormat,
 		"time-in",
 		cfg.TimeInputFormat,
-		`format of time property. Uses go's time convention; or use 'Unix' | 'UnixMilli' | 'UnixMicro' for Epoch timestamps.`,
+		`Go time layout string or 'Unix' | 'UnixMilli' | 'UnixMicro'.`,
 	)
-	flag.StringVar(&cfg.TimeOutputFormat, "time-out", cfg.TimeOutputFormat, "print time in this format. Uses go's time format convention.")
+	flag.StringVar(&cfg.TimeOutputFormat, "time-out", cfg.TimeOutputFormat, "Print time in this format. Use Go time format string.")
+	flag.StringSliceVar(&cfg.HiddenKeys,
+		"hide",
+		cfg.HiddenKeys,
+		"Hide a property. Use the flag multiple times to hide more than one.")
+}
+
+// hideProperty removes keys from a map.
+// The function modifies the map in place.
+func hideProperties(entry map[string]any, keys ...string) {
+	for _, k := range keys {
+		delete(entry, k)
+	}
 }
