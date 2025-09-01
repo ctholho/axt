@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
-	"strings"
 
-	"github.com/pterm/pterm"
 	flag "github.com/spf13/pflag"
 )
 
@@ -18,125 +16,6 @@ var (
 	CommitDate = "n/a"
 	TreeState  = "dirty"
 )
-
-func main() {
-	cfg := newConfig()
-	setupFlags(cfg)
-
-	var showVersion bool
-
-	flag.BoolVarP(&showVersion, "version", "v", false, "Show version information")
-
-	flag.Usage = printHelp
-	flag.Parse()
-
-	if showVersion {
-		printVersion()
-		os.Exit(0)
-	}
-
-	scanner := bufio.NewScanner(os.Stdin)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		var entry map[string]any
-
-		err := json.Unmarshal([]byte(line), &entry)
-		if err != nil {
-			fmt.Printf("🪵  %s\n%s", line, formatNewLine(cfg.EmptyLineStrategy, false))
-
-			continue
-		}
-
-		// Remove properties if a user wants to hide them
-		hideProperties(entry, cfg.HiddenKeys...)
-
-		// TIME
-		timeValue, _ := entry[cfg.TimeKey].(string)
-		timeColor := pterm.FgDarkGray
-		formattedTime := formatTime(timeValue, cfg.TimeInputFormat, cfg.TimeOutputFormat)
-
-		var formattedTimeWithAlign string
-		if timeValue == "" {
-			formattedTimeWithAlign = ""
-		} else {
-			formattedTimeWithAlign = timeColor.Sprintf(`%s `, formattedTime)
-		}
-
-		// LEVEL
-		levelValue, ok := entry[cfg.LevelKey].(string)
-		if levelValue == "" || !ok {
-			levelValue = "NO LEVEL"
-		}
-
-		formattedLevel, levelColor := formatLevel(levelValue, cfg.EmojiLevel)
-
-		// MESSAGE
-		messageValue, _ := entry[cfg.MessageKey].(string)
-		formattedMessage := levelColor.Sprint(messageValue)
-
-		// OVERALL FORMAT of first line
-		fmt.Printf("%s%s %s\n", formattedTimeWithAlign, formattedLevel, formattedMessage)
-
-		// Remove standard properties to avoid duplication if we display them on the
-		// first line
-		keysToHide := []string{cfg.TimeKey, cfg.LevelKey, cfg.MessageKey}
-		hideProperties(entry, keysToHide...)
-
-		lineColor := pterm.FgGray
-		// Add alignment
-		vertAlign := lineColor.Sprint("      ")
-
-		var logLines []string
-
-		// add extra fields if any
-		if len(entry) > 0 {
-			for key, value := range entry {
-				formattedKey := pterm.NewStyle(pterm.FgDefault).Sprint(key)
-				formattedValue := formatValue(value)
-				formattedValueLines := strings.Split(formattedValue, "\n")
-				logLines = append(logLines, fmt.Sprintf("%s   %s: %s", vertAlign, formattedKey, formattedValueLines[0]))
-
-				for _, line := range formattedValueLines[1:] {
-					logLines = append(logLines, fmt.Sprintf("%s   %s", vertAlign, line))
-				}
-			}
-		}
-
-		// Show a pretty vertical line if there's some properties (at least 3)
-		addBorder(logLines, vertAlign)
-
-		// Maybe add an empty line after each event
-		fmt.Printf("%s", formatNewLine(cfg.EmptyLineStrategy, true))
-	}
-
-	err := scanner.Err()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error reading input: %v\n", err)
-		os.Exit(1)
-	}
-}
-
-func printVersion() {
-	buildInfo, ok := debug.ReadBuildInfo()
-	if Version == "dev" && ok {
-		Version = buildInfo.Main.Version
-	}
-
-	fmt.Printf("axt version: %s\n", Version)
-	fmt.Printf("Commit: %s\n", Commit)
-	fmt.Printf("Built at: %s\n", CommitDate)
-	fmt.Printf("Tree state: %s\n", TreeState)
-}
-
-func printHelp() {
-	fmt.Fprintf(os.Stderr, "axt | structured logs but forcibly gemütlich | %s\n\n", Version)
-	fmt.Fprintf(os.Stderr, "Usage:\n")
-	fmt.Fprintf(os.Stderr, "  axt [options]\n\n")
-	fmt.Fprintf(os.Stderr, "Options:\n")
-	flag.PrintDefaults()
-}
 
 type Config struct {
 	TimeKey           string
@@ -181,10 +60,71 @@ func setupFlags(cfg *Config) {
 		"Hide a property. Use the flag multiple times to hide more than one.")
 }
 
-// hideProperty removes keys from a map.
-// The function modifies the map in place.
-func hideProperties(entry map[string]any, keys ...string) {
-	for _, k := range keys {
-		delete(entry, k)
+func setupCLI() *Config {
+	cfg := newConfig()
+	setupFlags(cfg)
+
+	var showVersion bool
+
+	flag.BoolVarP(&showVersion, "version", "v", false, "Show version information")
+
+	flag.Usage = printHelp
+	flag.Parse()
+
+	if showVersion {
+		printVersion()
+		os.Exit(0)
 	}
+
+	return cfg
+}
+
+func printVersion() {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if Version == "dev" && ok {
+		Version = buildInfo.Main.Version
+	}
+
+	fmt.Printf("axt version: %s\n", Version)
+	fmt.Printf("Commit: %s\n", Commit)
+	fmt.Printf("Built at: %s\n", CommitDate)
+	fmt.Printf("Tree state: %s\n", TreeState)
+}
+
+func printHelp() {
+	fmt.Fprintf(os.Stderr, "axt | structured logs but forcibly gemütlich | %s\n\n", Version)
+	fmt.Fprintf(os.Stderr, "Usage:\n")
+	fmt.Fprintf(os.Stderr, "  axt [options]\n\n")
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	flag.PrintDefaults()
+}
+
+func scan(cfg *Config) {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		var entry map[string]any
+
+		err := json.Unmarshal([]byte(line), &entry)
+		if err != nil {
+			prettyPrintBadJSON(line, cfg)
+
+			continue
+		}
+
+		prettyPrintJSON(entry, cfg)
+	}
+
+	err := scanner.Err()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error reading input: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func main() {
+	cfg := setupCLI()
+	scan(cfg)
 }

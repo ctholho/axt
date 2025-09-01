@@ -17,6 +17,69 @@ import (
 	"github.com/tidwall/pretty"
 )
 
+func prettyPrintJSON(entry map[string]any, cfg *Config) {
+	// Remove properties if a user wants to hide them
+	hideProperties(entry, cfg.HiddenKeys...)
+
+	// TIME
+	timeValue, _ := entry[cfg.TimeKey].(string)
+	timeColor := pterm.FgDarkGray
+	formattedTime := formatTime(timeValue, cfg.TimeInputFormat, cfg.TimeOutputFormat)
+
+	var formattedTimeWithAlign string
+	if timeValue == "" {
+		formattedTimeWithAlign = ""
+	} else {
+		formattedTimeWithAlign = timeColor.Sprintf(`%s `, formattedTime)
+	}
+
+	// LEVEL
+	levelValue, ok := entry[cfg.LevelKey].(string)
+	if levelValue == "" || !ok {
+		levelValue = "NO LEVEL"
+	}
+
+	formattedLevel, levelColor := formatLevel(levelValue, cfg.EmojiLevel)
+
+	// MESSAGE
+	messageValue, _ := entry[cfg.MessageKey].(string)
+	formattedMessage := levelColor.Sprint(messageValue)
+
+	// OVERALL FORMAT of first line
+	fmt.Printf("%s%s %s\n", formattedTimeWithAlign, formattedLevel, formattedMessage)
+
+	// Remove standard properties to avoid duplication if we display them on the
+	// first line
+	keysToHide := []string{cfg.TimeKey, cfg.LevelKey, cfg.MessageKey}
+	hideProperties(entry, keysToHide...)
+
+	lineColor := pterm.FgGray
+	// Add alignment
+	vertAlign := lineColor.Sprint("      ")
+
+	var logLines []string
+
+	// add extra fields if any
+	if len(entry) > 0 {
+		for key, value := range entry {
+			formattedKey := pterm.NewStyle(pterm.FgDefault).Sprint(key)
+			formattedValue := formatValue(value)
+			formattedValueLines := strings.Split(formattedValue, "\n")
+			logLines = append(logLines, fmt.Sprintf("%s   %s: %s", vertAlign, formattedKey, formattedValueLines[0]))
+
+			for _, line := range formattedValueLines[1:] {
+				logLines = append(logLines, fmt.Sprintf("%s   %s", vertAlign, line))
+			}
+		}
+	}
+
+	// Show a pretty vertical line if there's some properties (at least 3)
+	addBorder(logLines, vertAlign)
+
+	// Maybe add an empty line after each event
+	fmt.Printf("%s", formatNewLine(cfg.EmptyLineStrategy, true))
+}
+
 // levelInfo holds the display properties for a specific log level.
 type levelInfo struct {
 	Style     *pterm.Style
@@ -92,6 +155,10 @@ var levelMap = map[string]levelInfo{
 		Emoji:     "❌ ",
 		Text:      "CRITICAL",
 	},
+}
+
+func prettyPrintBadJSON(line string, cfg *Config) {
+	fmt.Printf("🪵  %s\n%s", line, formatNewLine(cfg.EmptyLineStrategy, false))
 }
 
 // formatLevel formts the log level
@@ -179,5 +246,13 @@ func formatNewLine(strategy string, structured bool) string {
 		return ""
 	default:
 		return ""
+	}
+}
+
+// hideProperty removes keys from a map.
+// The function modifies the map in place.
+func hideProperties(entry map[string]any, keys ...string) {
+	for _, k := range keys {
+		delete(entry, k)
 	}
 }

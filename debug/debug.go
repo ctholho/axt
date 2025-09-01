@@ -96,9 +96,9 @@ func main() {
 	logger.Info("User profile", slog.Any("user", user))
 
 	// Log array
-	tags := []string{"go", "logging", "slog", "json"}
-	logger.Info("Article published",
-		slog.String("title", "Structured Logging in Go"),
+	tags := []string{"when", "me", "president", "they", "see"}
+	logger.Info("Something happened",
+		slog.String("title", "few word do trick"),
 		slog.Any("tags", tags))
 
 	// Log with nested error

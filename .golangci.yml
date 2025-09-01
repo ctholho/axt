@@ -63,6 +63,7 @@ linters:
       - examples$
       - third_party$
       - test/
+      - debug/
 formatters:
   enable:
     - gofmt
